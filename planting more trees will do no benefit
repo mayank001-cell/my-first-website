@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India's Environmental Crossroads: An Interactive Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Earthy Harmony -->
+    <!-- Application Structure Plan: The SPA is designed as a thematic, single-page dashboard to provide a non-linear, exploratory experience. It's divided into three core sections: 1) A 'Forests' section to compare old vs. new growth, 2) a 'Pollution' section to analyze and compare the three main sources (Diwali, Agriculture, Vehicles), and 3) a 'Solutions' section with actionable recommendations. This structure was chosen over a linear report format to allow users to directly compare related concepts (e.g., pollution types) and engage with the data that interests them most, enhancing comprehension and retention. Navigation is handled by a sticky top bar, allowing easy jumps between these thematic areas. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Old-growth vs. New-growth forest characteristics. Goal: Compare. Viz: Two-sided card layout with key stats and a doughnut chart. Interaction: Hover effects on cards. Justification: A direct visual and statistical comparison is more impactful than paragraphs of text. Library: Chart.js for the doughnut chart.
+        - Report Info: India's forest cover net gain vs. gross loss. Goal: Contrast official stats with underlying reality. Viz: Interactive data cards. Interaction: Clicking a card reveals the corresponding data point and a brief explanation. Justification: Makes the "contradictory truths" concept tangible and easy to grasp. Library: Vanilla JS.
+        - Report Info: Comparing pollution from Diwali, Animal Agriculture, and Vehicles. Goal: Compare different types of environmental harm. Viz: A tabbed interface with a dynamic bar chart. Interaction: Clicking tabs updates the chart and descriptive text to show data for the selected source. Justification: Allows for a direct, apples-to-oranges comparison on multiple metrics (Nature, Scale, Health Impact), effectively countering "whataboutism". Library: Chart.js.
+        - Report Info: Alternatives to stubble burning. Goal: Inform and organize solutions. Viz: A grid of clickable cards. Interaction: Clicking a card reveals details about a specific solution. Justification: Organizes complex information into digestible, user-driven chunks. Library: Vanilla JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #383734;
+        }
+        .nav-active {
+            color: #4A5C3D;
+            border-bottom: 2px solid #4A5C3D;
+            font-weight: 600;
+        }
+        .nav-item {
+            cursor: pointer;
+            padding-bottom: 4px;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4A5C3D;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+
+        <header class="text-center py-12 md:py-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#4A5C3D] tracking-tight">An Environmental Reckoning for India</h1>
+            <p class="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-gray-600">An interactive guide to understanding the complex web of deforestation, pollution, and climate change in India, based on the latest research.</p>
+        </header>
+
+        <nav class="sticky top-0 bg-[#FDFBF8]/80 backdrop-blur-md z-10 border-b border-gray-200 mb-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-center h-16 space-x-6 md:space-x-10">
+                    <a onclick="showSection('forests')" class="nav-item nav-active flex items-center text-sm md:text-base font-medium text-gray-500 hover:text-[#4A5C3D]">Forests</a>
+                    <a onclick="showSection('pollution')" class="nav-item flex items-center text-sm md:text-base font-medium text-gray-500 hover:text-[#4A5C3D]">Pollution</a>
+                    <a onclick="showSection('solutions')" class="nav-item flex items-center text-sm md:text-base font-medium text-gray-500 hover:text-[#4A5C3D]">Solutions</a>
+                </div>
+            </div>
+        </nav>
+
+        <main>
+            <section id="forests" class="fade-in">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-[#4A5C3D]">The Two-Sided Story of India's Forests</h2>
+                    <p class="mt-3 max-w-2xl mx-auto text-lg text-gray-600">India is gaining tree cover, yet losing its most valuable natural forests. This section explores the critical difference between a priceless old-growth forest and a new plantation, and what the data truly reveals about this trade-off.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                        <h3 class="font-bold text-xl text-center mb-4 text-[#8C6A5D]">Old-Growth Forest: The Carbon Vault</h3>
+                        <p class="text-gray-600 mb-4 text-center">These are complex, ancient ecosystems that are irreplaceable. They act as massive warehouses, storing centuries of carbon.</p>
+                        <div class="chart-container mx-auto h-48 md:h-56">
+                            <canvas id="oldForestChart"></canvas>
+                        </div>
+                        <div class="mt-4 space-y-2 text-sm">
+                             <p><strong class="text-[#8C6A5D]">Carbon Role:</strong> Massive Storage</p>
+                             <p><strong class="text-[#8C6A5D]">Biodiversity:</strong> Very High (2-3x more species)</p>
+                             <p><strong class="text-[#8C6A5D]">Climate Resilience:</strong> High (cools air, filters water)</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                        <h3 class="font-bold text-xl text-center mb-4 text-[#6A8C5D]">New Plantation: The Carbon Earner</h3>
+                        <p class="text-gray-600 mb-4 text-center">Young, fast-growing trees are good at capturing CO2 quickly, but their total storage is a fraction of an old forest's.</p>
+                        <div class="chart-container mx-auto h-48 md:h-56">
+                            <canvas id="newForestChart"></canvas>
+                        </div>
+                        <div class="mt-4 space-y-2 text-sm">
+                             <p><strong class="text-[#6A8C5D]">Carbon Role:</strong> Rapid Capture</p>
+                             <p><strong class="text-[#6A8C5D]">Biodiversity:</strong> Low (often monoculture)</p>
+                             <p><strong class="text-[#6A8C5D]">Climate Resilience:</strong> Low</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12 bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-2xl font-bold text-center mb-4 text-[#4A5C3D]">Decoding the Data: A Contradictory Truth</h3>
+                    <p class="text-center text-gray-600 mb-6 max-w-3xl mx-auto">Official reports show a "net gain" in forest cover, but this masks a worrying trend. Click on the cards below to see the different sides of the story.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div id="stat-card-1" class="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-green-100 transition" onclick="updateStatInfo(1)">
+                            <p class="text-sm text-gray-500">Net Gain (2021-23)</p>
+                            <p class="text-2xl font-bold text-green-700">+1,445 km²</p>
+                        </div>
+                        <div id="stat-card-2" class="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-red-100 transition" onclick="updateStatInfo(2)">
+                            <p class="text-sm text-gray-500">Gross Loss (2001-24)</p>
+                            <p class="text-2xl font-bold text-red-700">-2.31 Mha</p>
+                        </div>
+                        <div id="stat-card-3" class="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-red-100 transition" onclick="updateStatInfo(3)">
+                            <p class="text-sm text-gray-500">Primary Forest Loss</p>
+                            <p class="text-2xl font-bold text-red-700">-348 kha</p>
+                        </div>
+                         <div id="stat-card-4" class="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-yellow-100 transition" onclick="updateStatInfo(4)">
+                            <p class="text-sm text-gray-500">NE India Loss</p>
+                            <p class="text-2xl font-bold text-yellow-700">-327 km²</p>
+                        </div>
+                    </div>
+                    <div id="stat-info-box" class="mt-6 p-4 bg-gray-100 rounded-lg text-center min-h-[80px]">
+                        <p id="stat-info-text" class="text-gray-700">Click a statistic to learn more.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="pollution" class="hidden fade-in">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-[#4A5C3D]">A Tale of Three Polluters</h2>
+                    <p class="mt-3 max-w-2xl mx-auto text-lg text-gray-600">The argument that one type of pollution justifies another is a dangerous distraction. This section factually compares the distinct impacts of Diwali firecrackers, animal agriculture, and daily traffic. Use the tabs to explore how they differ in nature, scale, and health consequences.</p>
+                </div>
+
+                <div class="flex justify-center border-b border-gray-200 mb-8">
+                    <button id="tab-diwali" class="px-4 py-2 -mb-px border-b-2 border-[#D97706] text-[#D97706] font-semibold" onclick="showPollutionData('diwali')">Diwali Shock</button>
+                    <button id="tab-agriculture" class="px-4 py-2 text-gray-500" onclick="showPollutionData('agriculture')">Agricultural Burden</button>
+                    <button id="tab-vehicles" class="px-4 py-2 text-gray-500" onclick="showPollutionData('vehicles')">Vehicular Grind</button>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h3 id="pollution-title" class="text-2xl font-bold text-gray-800 mb-4"></h3>
+                        <p id="pollution-description" class="text-gray-600 mb-4"></p>
+                        <div id="pollution-stats" class="space-y-3"></div>
+                         <div class="mt-6">
+                            <button id="gemini-pollution-button" class="bg-[#4A5C3D] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#3b4a31] transition w-full">✨ Suggest Personal Actions</button>
+                            <div id="gemini-pollution-output-container" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+                                <div id="gemini-pollution-loader" class="loader hidden"></div>
+                                <div id="gemini-pollution-output" class="text-sm text-gray-700 whitespace-pre-wrap"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="pollutionChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="solutions" class="hidden fade-in">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-[#4A5C3D]">Charting a Sustainable Future</h2>
+                    <p class="mt-3 max-w-2xl mx-auto text-lg text-gray-600">The challenges are immense, but the solutions are known and available. This section outlines key recommendations and viable alternatives that can help India move towards a cleaner, greener future. Click on the cards to explore the solutions.</p>
+                </div>
+                
+                <h3 class="text-2xl font-bold text-center mb-6 text-gray-800">Ending Agricultural Burning: From Waste to Wealth</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div id="solution-card-seeder" class="bg-white p-6 rounded-lg shadow-md border border-gray-200 cursor-pointer hover:shadow-xl transition" onclick="toggleSolution('seeder')">
+                        <h4 class="font-bold text-lg text-[#6A8C5D]">Happy Seeder</h4>
+                        <p class="text-sm text-gray-600 mt-2">A machine that sows wheat while mulching rice stubble, enriching the soil.</p>
+                    </div>
+                    <div id="solution-card-decomposer" class="bg-white p-6 rounded-lg shadow-md border border-gray-200 cursor-pointer hover:shadow-xl transition" onclick="toggleSolution('decomposer')">
+                        <h4 class="font-bold text-lg text-[#6A8C5D]">Bio-Decomposers</h4>
+                        <p class="text-sm text-gray-600 mt-2">Microbial sprays that rapidly decompose stubble into manure in the field.</p>
+                    </div>
+                    <div id="solution-card-energy" class="bg-white p-6 rounded-lg shadow-md border border-gray-200 cursor-pointer hover:shadow-xl transition" onclick="toggleSolution('energy')">
+                        <h4 class="font-bold text-lg text-[#6A8C5D]">Biomass Energy</h4>
+                        <p class="text-sm text-gray-600 mt-2">Compressing straw into pellets to replace coal in power plants.</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-2xl font-bold text-center mb-4 text-[#4A5C3D]">Your Local Action Plan</h3>
+                    <p class="text-center text-gray-600 mb-6 max-w-3xl mx-auto">Select one or more solutions above to generate a customized action plan for your community.</p>
+                    <button id="gemini-solution-button" class="bg-[#4A5C3D] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#3b4a31] transition w-full mx-auto block" onclick="generateSolutionReport()">✨ Generate Action Plan</button>
+                    <div id="gemini-solution-output-container" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+                         <div id="gemini-solution-loader" class="loader hidden"></div>
+                         <div id="gemini-solution-output" class="text-sm text-gray-700 whitespace-pre-wrap"></div>
+                    </div>
+                </div>
+
+                 <div class="mt-12">
+                    <h3 class="text-2xl font-bold text-center mb-6 text-gray-800">Broader Policy Recommendations</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                            <div class="text-3xl text-[#8C6A5D] mb-3">🌳</div>
+                            <h4 class="font-bold text-lg">Protect Natural Forests</h4>
+                            <p class="text-sm text-gray-600 mt-2">Prioritize zero loss of natural forests over planting new ones. Strengthen community-led conservation.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                            <div class="text-3xl text-[#4A5C3D] mb-3">🚗</div>
+                            <h4 class="font-bold text-lg">Invest in Sustainable Mobility</h4>
+                            <p class="text-sm text-gray-600 mt-2">Expand public transport, build safe walking/cycling infrastructure, and promote EV adoption.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                            <div class="text-3xl text-[#D97706] mb-3">♻️</div>
+                            <h4 class="font-bold text-lg">Modernize Waste Management</h4>
+                            <p class="text-sm text-gray-600 mt-2">Implement decentralized systems for segregation, recycling, and composting to end open burning.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+
+        <footer class="text-center py-12 mt-8 border-t border-gray-200">
+            <p class="text-gray-500">An interactive summary based on the report "An Environmental Reckoning for India".</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const sections = ['forests', 'pollution', 'solutions'];
+        const navItems = document.querySelectorAll('.nav-item');
+        let currentPollutionType = 'diwali';
+        let selectedSolutions = new Set();
+
+        async function callGeminiAPI(prompt, loaderId, outputId, containerId) {
+            const loader = document.getElementById(loaderId);
+            const outputContainer = document.getElementById(containerId);
+            const outputDiv = document.getElementById(outputId);
+
+            outputContainer.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            outputDiv.innerHTML = '';
+
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }]
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    outputDiv.innerText = text;
+                } else {
+                    outputDiv.innerText = 'Sorry, I could not generate a response. Please try again.';
+                }
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                outputDiv.innerText = 'An error occurred. Please check the console for details.';
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+
+        function showSection(sectionId) {
+            sections.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+
+            navItems.forEach(item => {
+                item.classList.remove('nav-active');
+                if (item.getAttribute('onclick').includes(sectionId)) {
+                    item.classList.add('nav-active');
+                }
+            });
+        }
+
+        const statInfoData = {
+            1: "<strong>Official Net Gain:</strong> This figure shows a slight overall increase in tree cover by subtracting losses from gains. While positive, it hides the fact that valuable, natural forests are being lost and replaced by plantations.",
+            2: "<strong>Gross Tree Cover Loss:</strong> Independent data shows a massive loss of 2.31 million hectares of tree cover since 2001. This represents significant deforestation and released 1.29 Gt of CO2 equivalent.",
+            3: "<strong>Primary Forest Loss:</strong> This is the most alarming figure. India has lost 5.4% of its irreplaceable, carbon-rich primary forests in just over two decades, a critical blow to biodiversity.",
+            4: "<strong>Northeast India Loss:</strong> Even the government's own data shows a net loss of forest cover in the ecologically sensitive and pristine Northeastern states, indicating a decline in natural forest wealth."
+        };
+
+        let activeStatCard = null;
+        function updateStatInfo(statId) {
+            const infoBox = document.getElementById('stat-info-box');
+            const infoText = document.getElementById('stat-info-text');
+            infoText.innerHTML = statInfoData[statId];
+            infoBox.classList.add('fade-in');
+            setTimeout(() => infoBox.classList.remove('fade-in'), 500);
+
+            if (activeStatCard) {
+                 activeStatCard.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
+            }
+            activeStatCard = document.getElementById(`stat-card-${statId}`);
+            activeStatCard.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500');
+        }
+
+        const pollutionData = {
+            diwali: {
+                title: "The Diwali Dilemma: Acute, Intense Shock",
+                description: "The impact of Diwali is a massive, short-term spike in pollution. It's not a continuous pressure, but its intensity has immediate and severe health consequences, especially for the vulnerable.",
+                stats: [
+                    "<strong>PM2.5 Levels:</strong> Spike 3 to 10 times higher than normal days.",
+                    "<strong>Health Impact:</strong> 30-40% increase in emergency room visits for respiratory issues.",
+                    "<strong>Noise Pollution:</strong> Reaches 100-120 dB, far above the safe limit of 55 dB."
+                ],
+                chart: {
+                    labels: ['PM2.5 Spike', 'Noise Spike (dB)', 'Hospital Visits'],
+                    data: [8, 20, 35],
+                    backgroundColor: 'rgba(217, 119, 6, 0.6)',
+                    borderColor: 'rgba(217, 119, 6, 1)'
+                },
+                prompt: "As an environmental expert in India, suggest 3 simple, actionable steps an individual can take to reduce the environmental impact of Diwali celebrations, focusing on alternatives to traditional firecrackers and waste reduction."
+            },
+            agriculture: {
+                title: "The Agricultural Burden: Chronic, Systemic Pressure",
+                description: "Animal agriculture and slaughterhouses exert a continuous and massive environmental pressure. Their impacts are less visible daily but have profound long-term consequences for climate, water, and land.",
+                stats: [
+                    "<strong>Greenhouse Gases:</strong> Livestock accounts for ~63% of India's agricultural GHG emissions.",
+                    "<strong>Water Footprint:</strong> 1kg of beef requires 15,415 litres of water, compared to just 322 litres for 1kg of vegetables.",
+                    "<strong>Water Pollution:</strong> Untreated waste from slaughterhouses depletes oxygen in rivers, killing aquatic life."
+                ],
+                 chart: {
+                    labels: ['Agri GHG Share (%)', 'Beef Water Use (L/kg)', 'Veg Water Use (L/kg)'],
+                    data: [63, 15415, 322],
+                    backgroundColor: 'rgba(106, 140, 93, 0.6)',
+                    borderColor: 'rgba(106, 140, 93, 1)'
+                },
+                prompt: "As an environmental expert in India, suggest 3 simple, actionable steps an individual can take to reduce their personal environmental footprint related to animal agriculture, focusing on dietary choices and supporting sustainable farming."
+            },
+            vehicles: {
+                title: "The Daily Grind: Persistent, Localized Poison",
+                description: "Vehicular pollution is a constant, daily assault on the health of urban populations. It's the primary driver of year-round poor air quality in cities, leading to chronic diseases.",
+                stats: [
+                    "<strong>PM2.5 Contribution:</strong> Responsible for 14% to 27% of PM2.5 in major cities.",
+                    "<strong>Health Impact:</strong> Contributes to an estimated 2 million premature deaths in India annually.",
+                    "<strong>Life Expectancy:</strong> Can reduce life expectancy by up to 7 years in highly polluted regions."
+                ],
+                 chart: {
+                    labels: ['PM2.5 Share (%)', 'Premature Deaths (M)', 'Life Years Lost'],
+                    data: [27, 2, 7],
+                    backgroundColor: 'rgba(140, 106, 93, 0.6)',
+                    borderColor: 'rgba(140, 106, 93, 1)'
+                },
+                prompt: "As an environmental expert in India, suggest 3 simple, actionable steps an individual can take to reduce their reliance on personal vehicles and lower their transportation-related pollution, focusing on public transport, non-motorized options, and efficient vehicle use."
+            }
+        };
+
+        let pollutionChart;
+        function showPollutionData(type) {
+            currentPollutionType = type;
+            const data = pollutionData[type];
+            document.getElementById('pollution-title').innerText = data.title;
+            document.getElementById('pollution-description').innerText = data.description;
+            
+            const statsContainer = document.getElementById('pollution-stats');
+            statsContainer.innerHTML = data.stats.map(stat => `<p class="text-gray-700 bg-gray-100 p-2 rounded">${stat}</p>`).join('');
+
+            ['diwali', 'agriculture', 'vehicles'].forEach(id => {
+                const tab = document.getElementById(`tab-${id}`);
+                tab.classList.remove('border-[#D97706]', 'text-[#D97706]', 'font-semibold', 'border-[#6A8C5D]', 'text-[#6A8C5D]', 'border-[#8C6A5D]', 'text-[#8C6A5D]');
+                tab.classList.add('text-gray-500');
+            });
+            const activeTab = document.getElementById(`tab-${type}`);
+            const colorClass = type === 'diwali' ? 'border-[#D97706] text-[#D97706]' : type === 'agriculture' ? 'border-[#6A8C5D] text-[#6A8C5D]' : 'border-[#8C6A5D] text-[#8C6A5D]';
+            activeTab.classList.add(...colorClass.split(' '), 'font-semibold');
+            activeTab.classList.remove('text-gray-500');
+
+            if (pollutionChart) {
+                pollutionChart.destroy();
+            }
+            const ctx = document.getElementById('pollutionChart').getContext('2d');
+            pollutionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.chart.labels,
+                    datasets: [{
+                        label: 'Impact Metric',
+                        data: data.chart.data,
+                        backgroundColor: data.chart.backgroundColor,
+                        borderColor: data.chart.borderColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('en-IN').format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    if (value >= 1000) {
+                                        return value / 1000 + 'k';
+                                    }
+                                    return value;
+                                }
+                            }
+                        },
+                        x: {
+                           ticks: {
+                                autoSkip: false,
+                                maxRotation: 0,
+                                minRotation: 0,
+                                callback: function(value, index, values) {
+                                    const label = this.getLabelForValue(value);
+                                    if (label.length > 16) {
+                                        return label.split(' ').map(word => word.length > 8 ? word.substring(0,8)+'...' : word);
+                                    }
+                                    return label;
+                                }
+                           }
+                        }
+                    }
+                }
+            });
+            
+            document.getElementById('gemini-pollution-output-container').classList.add('hidden');
+            document.getElementById('pollution').classList.add('fade-in');
+            setTimeout(() => document.getElementById('pollution').classList.remove('fade-in'), 500);
+        }
+        
+        document.getElementById('gemini-pollution-button').addEventListener('click', () => {
+            const prompt = pollutionData[currentPollutionType].prompt;
+            callGeminiAPI(prompt, 'gemini-pollution-loader', 'gemini-pollution-output', 'gemini-pollution-output-container');
+        });
+
+        const solutionDetails = {
+            seeder: "In-Situ Management: The Happy Seeder, a machine that sows wheat while mulching rice stubble, enriching the soil.",
+            decomposer: "In-Situ Management: Bio-Decomposers, microbial sprays that rapidly decompose stubble into manure in the field.",
+            energy: "Ex-Situ Management: Biomass Energy, which involves compressing straw into pellets to replace coal in power plants."
+        };
+
+        function toggleSolution(solutionId) {
+            const card = document.getElementById(`solution-card-${solutionId}`);
+            if (selectedSolutions.has(solutionId)) {
+                selectedSolutions.delete(solutionId);
+                card.classList.remove('ring-2', 'ring-offset-2', 'ring-green-500');
+            } else {
+                selectedSolutions.add(solutionId);
+                card.classList.add('ring-2', 'ring-offset-2', 'ring-green-500');
+            }
+        }
+
+        function generateSolutionReport() {
+            if (selectedSolutions.size === 0) {
+                alert("Please select at least one solution to generate a report.");
+                return;
+            }
+            const selectedItems = Array.from(selectedSolutions).map(id => solutionDetails[id]);
+            const prompt = `As a local policy advisor in India, create a brief, actionable plan for a community to implement the following solutions to agricultural burning: ${selectedItems.join(', ')}. The plan should outline key steps, potential local partners (like farmer co-ops, panchayats), and how to measure success.`;
+            callGeminiAPI(prompt, 'gemini-solution-loader', 'gemini-solution-output', 'gemini-solution-output-container');
+        }
+
+        window.onload = function() {
+            const createForestChart = (id, label, data, color) => {
+                const ctx = document.getElementById(id).getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [label, ''],
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [color, '#E5E7EB'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        }
+                    }
+                });
+            };
+
+            createForestChart('oldForestChart', 'Carbon Stored', [90, 10], '#8C6A5D');
+            createForestChart('newForestChart', 'Carbon Captured', [30, 70], '#6A8C5D');
+            
+            showPollutionData('diwali');
+            showSection('forests');
+            updateStatInfo(1);
+        };
+    </script>
+</body>
+</html>
